@@ -1,0 +1,91 @@
+service,category,month,total_seats,active_seats,monthly_cost
+Slack,Communication,2025-01,55,48,1426
+Slack,Communication,2025-02,55,49,1430
+Slack,Communication,2025-03,55,50,1422
+Slack,Communication,2025-04,55,51,1425
+Slack,Communication,2025-05,55,52,1422
+Slack,Communication,2025-06,55,53,1417
+Microsoft Teams,Communication,2025-01,55,38,1100
+Microsoft Teams,Communication,2025-02,55,32,1100
+Microsoft Teams,Communication,2025-03,55,26,1100
+Microsoft Teams,Communication,2025-04,55,20,1100
+Microsoft Teams,Communication,2025-05,55,14,1100
+Microsoft Teams,Communication,2025-06,55,8,1100
+Google Workspace,Productivity,2025-01,55,54,1660
+Google Workspace,Productivity,2025-02,55,56,1678
+Google Workspace,Productivity,2025-03,55,53,1618
+Google Workspace,Productivity,2025-04,55,56,1680
+Google Workspace,Productivity,2025-05,55,56,1600
+Google Workspace,Productivity,2025-06,55,54,1603
+Notion,Productivity,2025-01,45,31,872
+Notion,Productivity,2025-02,45,29,914
+Notion,Productivity,2025-03,45,31,873
+Notion,Productivity,2025-04,45,30,891
+Notion,Productivity,2025-05,45,28,861
+Notion,Productivity,2025-06,45,32,949
+GitHub Enterprise,Developer Tools,2025-01,20,18,1278
+GitHub Enterprise,Developer Tools,2025-02,20,19,1236
+GitHub Enterprise,Developer Tools,2025-03,20,17,1234
+GitHub Enterprise,Developer Tools,2025-04,20,16,1220
+GitHub Enterprise,Developer Tools,2025-05,20,17,1299
+GitHub Enterprise,Developer Tools,2025-06,20,20,1266
+Figma,Design,2025-01,40,22,1800
+Figma,Design,2025-02,40,18,1800
+Figma,Design,2025-03,40,14,1800
+Figma,Design,2025-04,40,10,1800
+Figma,Design,2025-05,40,7,1800
+Figma,Design,2025-06,40,6,1800
+AWS (Production),Cloud Infrastructure,2025-01,,,18751
+AWS (Production),Cloud Infrastructure,2025-02,,,18648
+AWS (Production),Cloud Infrastructure,2025-03,,,19042
+AWS (Production),Cloud Infrastructure,2025-04,,,19527
+AWS (Production),Cloud Infrastructure,2025-05,,,20016
+AWS (Production),Cloud Infrastructure,2025-06,,,20139
+AWS (Dev/Staging),Cloud Infrastructure,2025-01,,,3124
+AWS (Dev/Staging),Cloud Infrastructure,2025-02,,,3247
+AWS (Dev/Staging),Cloud Infrastructure,2025-03,,,4480
+AWS (Dev/Staging),Cloud Infrastructure,2025-04,,,5760
+AWS (Dev/Staging),Cloud Infrastructure,2025-05,,,6720
+AWS (Dev/Staging),Cloud Infrastructure,2025-06,,,7359
+Snowflake,Data Platform,2025-01,15,11,4218
+Snowflake,Data Platform,2025-02,15,13,4426
+Snowflake,Data Platform,2025-03,15,12,4379
+Snowflake,Data Platform,2025-04,15,13,4591
+Snowflake,Data Platform,2025-05,15,13,4802
+Snowflake,Data Platform,2025-06,15,12,4761
+Looker,Analytics,2025-01,30,18,2400
+Looker,Analytics,2025-02,30,14,2400
+Looker,Analytics,2025-03,30,20,2400
+Looker,Analytics,2025-04,30,5,2400
+Looker,Analytics,2025-05,30,0,2400
+Looker,Analytics,2025-06,30,0,2400
+Salesforce,CRM,2025-01,15,15,3796
+Salesforce,CRM,2025-02,15,16,3777
+Salesforce,CRM,2025-03,15,16,3731
+Salesforce,CRM,2025-04,15,13,3773
+Salesforce,CRM,2025-05,15,15,3751
+Salesforce,CRM,2025-06,15,13,3798
+HubSpot,Marketing,2025-01,12,11,1391
+HubSpot,Marketing,2025-02,12,8,1396
+HubSpot,Marketing,2025-03,12,11,1470
+HubSpot,Marketing,2025-04,12,8,1485
+HubSpot,Marketing,2025-05,12,10,1487
+HubSpot,Marketing,2025-06,12,11,1405
+Okta,Identity,2025-01,55,55,1389
+Okta,Identity,2025-02,55,57,1413
+Okta,Identity,2025-03,55,56,1332
+Okta,Identity,2025-04,55,56,1413
+Okta,Identity,2025-05,55,53,1343
+Okta,Identity,2025-06,55,55,1392
+Miro,Collaboration,2025-01,35,12,700
+Miro,Collaboration,2025-02,35,12,700
+Miro,Collaboration,2025-03,35,8,700
+Miro,Collaboration,2025-04,35,3,700
+Miro,Collaboration,2025-05,35,0,700
+Miro,Collaboration,2025-06,35,0,700
+Loom,Communication,2025-01,25,8,375
+Loom,Communication,2025-02,25,7,375
+Loom,Communication,2025-03,25,4,375
+Loom,Communication,2025-04,25,1,375
+Loom,Communication,2025-05,25,0,375
+Loom,Communication,2025-06,25,0,375
