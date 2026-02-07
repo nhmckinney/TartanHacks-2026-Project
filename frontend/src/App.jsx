@@ -30,9 +30,9 @@ function App() {
       {data && (
         <div style={{textAlign: 'left'}}>
           <p><strong>✅ Backend Connected</strong></p>
-          <p>Payroll Rows: {data.payroll?.length}</p>
-          <p>AI Cost Rows: {data.ai_costs?.length}</p>
-          <p>SaaS Rows: {data.saas_cloud?.length}</p>
+          <p>Payroll Rows: {data.payroll_rows}</p>
+          <p>AI Cost Rows: {data.ai_costs_rows}</p>
+          <p>SaaS Rows: {data.saas_cloud_rows}</p>
           <p style={{fontSize: '0.8em', color: '#666'}}>
             Check console for full JSON response.
           </p>
