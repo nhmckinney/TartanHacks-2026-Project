@@ -12,9 +12,10 @@ from demo_data import load_all, df_preview
 from drift import analyze_all
 from agent import format_drift_for_ai, analyze_drift, chat_with_agent
 from auth import (
-    users_db, hash_password, verify_password,
+    hash_password, verify_password,
     create_access_token, get_current_user,
 )
+from database import init_db, get_user_by_email, create_user
 
 app = FastAPI(title="PayDrift API")
 
@@ -32,8 +33,9 @@ datasets: dict[str, pd.DataFrame] = {}
 
 
 @app.on_event("startup")
-def startup():
-    """Load demo data into memory when the server starts."""
+async def startup():
+    """Initialize database and load demo data when the server starts."""
+    await init_db()
     global datasets
     datasets = load_all()
     print(f"Loaded demo data:")
@@ -50,22 +52,19 @@ def health():
 
 # --- POST /api/register ---
 @app.post("/api/register", response_model=TokenResponse)
-def register(body: UserRegister):
-    if body.email in users_db:
+async def register(body: UserRegister):
+    existing = await get_user_by_email(body.email)
+    if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
-    users_db[body.email] = {
-        "email": body.email,
-        "name": body.name,
-        "hashed_password": hash_password(body.password),
-    }
+    await create_user(body.email, body.name, hash_password(body.password))
     token = create_access_token({"sub": body.email})
     return TokenResponse(access_token=token, name=body.name, email=body.email)
 
 
 # --- POST /api/login ---
 @app.post("/api/login", response_model=TokenResponse)
-def login(body: UserLogin):
-    user = users_db.get(body.email)
+async def login(body: UserLogin):
+    user = await get_user_by_email(body.email)
     if not user or not verify_password(body.password, user["hashed_password"]):
         raise HTTPException(status_code=401, detail="Invalid email or password")
     token = create_access_token({"sub": body.email})

@@ -6,6 +6,8 @@ from passlib.context import CryptContext
 from dotenv import load_dotenv
 import os
 
+from database import get_user_by_email
+
 load_dotenv()
 
 # --- Config ---
@@ -18,10 +20,6 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # --- OAuth2 scheme (reads Bearer token from Authorization header) ---
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/login")
-
-# --- In-memory user store ---
-# { email: { "email": str, "name": str, "hashed_password": str } }
-users_db: dict[str, dict] = {}
 
 
 def hash_password(password: str) -> str:
@@ -39,7 +37,7 @@ def create_access_token(data: dict) -> str:
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
-def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
+async def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
     """FastAPI dependency — extracts and validates the JWT, returns user dict."""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -54,7 +52,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
     except JWTError:
         raise credentials_exception
 
-    user = users_db.get(email)
+    user = await get_user_by_email(email)
     if user is None:
         raise credentials_exception
     return user
