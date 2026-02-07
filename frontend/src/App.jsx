@@ -1,10 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import ReactMarkdown from 'react-markdown';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer,
 } from "recharts";
 import {
   Users, Bot, Cloud, TrendingUp, TrendingDown, AlertTriangle, RefreshCw,
   Loader2, Zap, DollarSign, BarChart3, ArrowUpRight, ArrowDownRight,
+  Sparkles, MessageSquare, Send, X
 } from "lucide-react";
 import { api } from "./services/api";
 
@@ -82,6 +84,16 @@ const S = {
   footer: { borderTop: "1px solid rgba(255,255,255,0.04)", marginTop: 32, padding: "32px 0" },
   footerInner: { maxWidth: "1100px", margin: "0 auto", padding: "0 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 },
   footerText: { fontSize: 11, color: "#3f3f46" },
+  
+  // AI Styles
+  aiButton: { display: "flex", alignItems: "center", gap: 8, padding: "12px 24px", borderRadius: 12, background: "linear-gradient(135deg, #a78bfa, #ec4899)", border: "none", color: "#fff", fontWeight: 700, cursor: "pointer", transition: "all 0.2s", boxShadow: "0 4px 20px rgba(236, 72, 153, 0.3)" },
+  aiBox: { marginTop: 32, borderRadius: 24, background: "rgba(167, 139, 250, 0.03)", border: "1px solid rgba(167, 139, 250, 0.1)", padding: 32, position: "relative", overflow: "hidden" },
+  aiHeader: { display: "flex", alignItems: "center", gap: 12, marginBottom: 20 },
+  aiTitle: { fontSize: 18, fontWeight: 700, background: "linear-gradient(135deg, #e4e4e7, #a78bfa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" },
+  markdown: { color: "#d4d4d8", fontSize: 15, lineHeight: 1.7 },
+  chatBox: { marginTop: 24, borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: 24 },
+  chatInput: { width: "100%", background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "12px 16px", color: "#fff", outline: "none", fontSize: 14 },
+  chatMsg: (user) => ({ padding: "8px 12px", borderRadius: 8, background: user ? "rgba(255,255,255,0.05)" : "rgba(167, 139, 250, 0.1)", marginBottom: 8, maxWidth: "80%", marginLeft: user ? "auto" : 0, color: user ? "#d4d4d8" : "#e9d5ff", fontSize: 14 }),
 };
 
 function App() {
@@ -89,6 +101,13 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [tab, setTab] = useState("people");
+  
+  // AI State
+  const [aiAnalysis, setAiAnalysis] = useState(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [chatHistory, setChatHistory] = useState([]);
+  const [chatInput, setChatInput] = useState("");
+  const chatEndRef = useRef(null);
 
   const load = () => {
     setLoading(true); setError(null);
@@ -96,7 +115,35 @@ function App() {
       .then((r) => { setData(r); setLoading(false); })
       .catch((e) => { setError(e.message); setLoading(false); });
   };
+  
   useEffect(load, []);
+  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [chatHistory]);
+
+  const runAnalysis = async () => {
+    setAiLoading(true);
+    try {
+      const res = await api.analyze(data);
+      setAiAnalysis(res.markdown);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const sendChat = async () => {
+    if (!chatInput.trim()) return;
+    const msg = chatInput;
+    setChatInput("");
+    setChatHistory(h => [...h, { role: "user", content: msg }]);
+    
+    try {
+      const res = await api.chat(msg, chatHistory, data);
+      setChatHistory(h => [...h, { role: "assistant", content: res.response }]);
+    } catch (e) {
+      setChatHistory(h => [...h, { role: "assistant", content: "Error connecting to AI." }]);
+    }
+  };
 
   if (loading) return (
     <div style={{ ...S.page, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -134,7 +181,16 @@ function App() {
   return (
     <div style={S.page}>
       <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
-      <style>{`@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}} @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}} table{border-collapse:collapse} button{cursor:pointer;border:none;background:none;font-family:inherit}`}</style>
+      <style>{`
+        @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}} 
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}} 
+        table{border-collapse:collapse} 
+        button{cursor:pointer;border:none;background:none;font-family:inherit}
+        .markdown ul { list-style: disc; padding-left: 20px; margin-bottom: 16px; }
+        .markdown li { margin-bottom: 8px; }
+        .markdown strong { color: #fff; font-weight: 700; }
+        .markdown h3 { font-size: 16px; color: #f472b6; margin-top: 24px; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+      `}</style>
 
       {/* HEADER */}
       <header style={S.header}>
@@ -172,6 +228,15 @@ function App() {
             <p style={S.annualized}>
               That's <span style={S.annualNum}>{fmt(ad)}</span> <span style={{ color: "#a1a1aa" }}>/year</span> in unbudgeted drift
             </p>
+            
+            {/* AI BUTTON */}
+            <div style={{ display: "flex", justifyContent: "center", marginTop: 32 }}>
+               <button onClick={runAnalysis} disabled={aiLoading || aiAnalysis} style={{ ...S.aiButton, opacity: aiLoading || aiAnalysis ? 0.7 : 1 }}>
+                 {aiLoading ? <Loader2 size={18} style={{ animation: "spin 1s linear infinite" }} /> : <Sparkles size={18} />}
+                 {aiLoading ? "Analyzing Data..." : aiAnalysis ? "Analysis Complete" : "Analyze with PayDrift AI"}
+               </button>
+            </div>
+
             <div style={S.miniPills}>
               {categories.map((c) => {
                 const cm = CAT[c.category]; const up = c.total_drift > 0;
@@ -189,6 +254,46 @@ function App() {
             </div>
           </div>
         </div>
+        
+        {/* AI INSIGHTS PANEL */}
+        {(aiAnalysis || aiLoading) && (
+          <div style={{ ...S.aiBox, ...S.section }}>
+            <div style={S.aiHeader}>
+              <Sparkles size={24} color="#a78bfa" />
+              <span style={S.aiTitle}>CFO Advisor Insights</span>
+            </div>
+            
+            {aiLoading ? (
+              <div style={{ color: "#71717a", fontSize: 14 }}>Reading financial signals and drift patterns...</div>
+            ) : (
+              <>
+                <div className="markdown" style={S.markdown}>
+                  <ReactMarkdown>{aiAnalysis}</ReactMarkdown>
+                </div>
+
+                {/* CHAT INTERFACE */}
+                <div style={S.chatBox}>
+                  <div style={{ maxHeight: 300, overflowY: "auto", marginBottom: 16 }}>
+                    {chatHistory.map((msg, i) => (
+                      <div key={i} style={S.chatMsg(msg.role === "user")}>{msg.content}</div>
+                    ))}
+                    <div ref={chatEndRef} />
+                  </div>
+                  <div style={{ display: "flex", gap: 12 }}>
+                    <input 
+                      style={S.chatInput} 
+                      placeholder="Ask a follow-up question (e.g. 'How do we cut AI spend?')" 
+                      value={chatInput}
+                      onChange={(e) => setChatInput(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && sendChat()}
+                    />
+                    <button onClick={sendChat} style={{ ...S.aiButton, padding: "0 20px" }}><Send size={16} /></button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
 
         {/* CARDS */}
         <div style={{ ...S.grid, ...S.section }}>

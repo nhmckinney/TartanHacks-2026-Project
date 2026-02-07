@@ -7,6 +7,8 @@ from models import DriftResponse, UploadResponse
 from demo_data import load_all, df_preview
 from drift import analyze_all
 
+import agent
+
 app = FastAPI(title="PayDrift API")
 
 app.add_middleware(
@@ -81,3 +83,6 @@ def reset_data():
     global datasets
     datasets = load_all()
     return {"status": "reset to demo data"}
+
+
+app.include_router(agent.router, prefix="/api")
