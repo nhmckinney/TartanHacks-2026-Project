@@ -3,8 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
 from io import BytesIO
 
-from models import RawDataResponse, UploadResponse
+from models import RawDataResponse, DriftResponse, UploadResponse
 from demo_data import load_all, df_preview
+from drift import analyze_all
 
 app = FastAPI(title="PayDrift API")
 
@@ -39,28 +40,12 @@ def health():
 
 
 # --- GET /api/drift ---
-# Phase 1: Returns raw data summary + samples
-# Phase 2: Will return actual drift calculations
-@app.get("/api/drift", response_model=RawDataResponse)
+# Returns drift calculations for all 3 datasets
+@app.get("/api/drift")
 def get_drift():
-    payroll = datasets.get("payroll")
-    ai_costs = datasets.get("ai_costs")
-    saas_cloud = datasets.get("saas_cloud")
-
-    if payroll is None or ai_costs is None or saas_cloud is None:
+    if not datasets:
         raise HTTPException(status_code=500, detail="Demo data not loaded")
-
-    return RawDataResponse(
-        payroll_rows=len(payroll),
-        ai_costs_rows=len(ai_costs),
-        saas_cloud_rows=len(saas_cloud),
-        payroll_columns=list(payroll.columns),
-        ai_costs_columns=list(ai_costs.columns),
-        saas_cloud_columns=list(saas_cloud.columns),
-        payroll_sample=df_preview(payroll),
-        ai_costs_sample=df_preview(ai_costs),
-        saas_cloud_sample=df_preview(saas_cloud),
-    )
+    return analyze_all(datasets)
 
 
 # --- POST /api/upload ---
