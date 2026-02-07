@@ -3,210 +3,333 @@ import {
   AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer,
 } from "recharts";
 import {
-  Users, Bot, Cloud, TrendingUp, TrendingDown, AlertTriangle, RefreshCw, Loader2,
+  Users, Bot, Cloud, TrendingUp, TrendingDown, AlertTriangle, RefreshCw,
+  Loader2, Zap, DollarSign, BarChart3, ArrowUpRight, ArrowDownRight,
 } from "lucide-react";
 import { api } from "./services/api";
 
 const fmt = (n) => "$" + Math.abs(Math.round(n)).toLocaleString();
 const fmtPct = (n) => (n >= 0 ? "+" : "") + n.toFixed(1) + "%";
+const MO = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const FULL_MO = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
-const CATEGORY_META = {
-  people: { label: "People", icon: Users, color: "#a78bfa", trendKey: "people" },
-  ai_llm: { label: "AI / LLM", icon: Bot, color: "#f472b6", trendKey: "ai_llm" },
-  saas_cloud: { label: "SaaS & Cloud", icon: Cloud, color: "#38bdf8", trendKey: "saas_cloud" },
+const CAT = {
+  people: { label: "People", desc: "Salaries, overtime & contractors", icon: Users, color: "#a78bfa", key: "people" },
+  ai_llm: { label: "AI / LLM", desc: "API calls & model usage", icon: Bot, color: "#f472b6", key: "ai_llm" },
+  saas_cloud: { label: "SaaS & Cloud", desc: "Subscriptions & infrastructure", icon: Cloud, color: "#38bdf8", key: "saas_cloud" },
+};
+
+const S = {
+  page: { minHeight: "100vh", background: "#09090b", color: "#e4e4e7", fontFamily: "'DM Sans', system-ui, sans-serif" },
+  header: { position: "sticky", top: 0, zIndex: 50, background: "rgba(9,9,11,0.85)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(255,255,255,0.06)" },
+  headerInner: { maxWidth: "1100px", margin: "0 auto", padding: "0 24px", height: "56px", display: "flex", alignItems: "center", justifyContent: "space-between" },
+  logo: { width: 32, height: 32, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg, #a78bfa, #ec4899)" },
+  content: { maxWidth: "1100px", margin: "0 auto", padding: "40px 24px" },
+  section: { marginBottom: 32 },
+  hero: { textAlign: "center", position: "relative", overflow: "hidden", borderRadius: 24, border: "1px solid rgba(239,68,68,0.12)", padding: "56px 32px", background: "linear-gradient(180deg, rgba(239,68,68,0.05) 0%, transparent 60%)" },
+  heroGlow: { position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 500, height: 500, borderRadius: "50%", opacity: 0.03, filter: "blur(80px)", background: "#ef4444" },
+  pill: { display: "inline-flex", alignItems: "center", gap: 8, padding: "6px 16px", borderRadius: 50, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.12)", marginBottom: 24 },
+  pillText: { fontSize: 11, fontWeight: 700, color: "#f87171", textTransform: "uppercase", letterSpacing: "0.15em" },
+  bigNum: { fontSize: "clamp(48px, 8vw, 80px)", fontWeight: 800, color: "#fff", fontFamily: "'DM Mono', monospace", letterSpacing: "-0.04em", lineHeight: 1 },
+  bigSuffix: { fontSize: 24, color: "rgba(252,165,165,0.5)", fontWeight: 500, marginLeft: 8 },
+  annualized: { marginTop: 16, fontSize: 16, color: "#71717a" },
+  annualNum: { color: "#fca5a5", fontWeight: 700, fontFamily: "'DM Mono', monospace" },
+  miniPills: { display: "flex", justifyContent: "center", gap: 12, marginTop: 32, flexWrap: "wrap" },
+  miniPill: { display: "flex", alignItems: "center", gap: 8, padding: "8px 14px", borderRadius: 50, background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.05)" },
+  miniPillText: { fontSize: 11, color: "#a1a1aa" },
+  miniPillVal: { fontSize: 11, fontWeight: 700, fontFamily: "'DM Mono', monospace" },
+  grid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 },
+  card: (sel, color) => ({
+    position: "relative", textAlign: "center", borderRadius: 20, padding: 28, cursor: "pointer",
+    border: sel ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(255,255,255,0.04)",
+    background: sel ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.015)",
+    transform: sel ? "scale(1.03)" : "scale(1)",
+    boxShadow: sel ? "0 20px 60px rgba(0,0,0,0.3)" : "none",
+    transition: "all 0.3s ease",
+    borderTop: sel ? `2px solid ${color}50` : "1px solid rgba(255,255,255,0.04)",
+  }),
+  cardIcon: (color, sel) => ({
+    width: 48, height: 48, borderRadius: 12, margin: "0 auto 16px", display: "flex", alignItems: "center", justifyContent: "center",
+    background: color + "15", boxShadow: sel ? `0 0 30px ${color}20` : "none",
+  }),
+  cardLabel: { fontSize: 15, fontWeight: 600, color: "#d4d4d8", marginBottom: 2 },
+  cardDesc: { fontSize: 11, color: "#52525b", marginBottom: 16 },
+  cardNum: { fontSize: 28, fontWeight: 800, fontFamily: "'DM Mono', monospace" },
+  cardPct: { fontSize: 12, marginTop: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 4 },
+  chartBox: { borderRadius: 20, border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)", overflow: "hidden" },
+  chartHeader: { padding: "24px 24px 8px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 },
+  chartTitle: { fontSize: 15, fontWeight: 700, color: "#e4e4e7" },
+  chartSub: { fontSize: 12, color: "#52525b", marginTop: 2 },
+  tabBar: { display: "flex", gap: 2, background: "rgba(255,255,255,0.03)", borderRadius: 12, padding: 4, border: "1px solid rgba(255,255,255,0.04)" },
+  tab: (sel, color) => ({
+    padding: "6px 16px", fontSize: 11, fontWeight: 700, borderRadius: 8, cursor: "pointer", border: "none",
+    background: sel ? color + "25" : "transparent", color: sel ? color : "#71717a", transition: "all 0.2s",
+  }),
+  drifterBox: { display: "flex", alignItems: "center", gap: 16, padding: "20px 24px", borderRadius: 20, border: "1px solid rgba(239,68,68,0.1)", background: "rgba(239,68,68,0.025)", flexWrap: "wrap" },
+  drifterIcon: { width: 44, height: 44, borderRadius: 12, background: "rgba(239,68,68,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  drifterText: { fontSize: 14, color: "#d4d4d8" },
+  drifterName: { fontWeight: 800, color: "#f87171" },
+  drifterSub: { fontSize: 12, color: "#71717a", marginTop: 4 },
+  drifterNum: { color: "#f87171", fontWeight: 700, fontFamily: "'DM Mono', monospace" },
+  tableBox: { borderRadius: 20, border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)", overflow: "hidden" },
+  tableHeader: { padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 },
+  tableTitle: { fontSize: 15, fontWeight: 700, color: "#e4e4e7" },
+  tableSub: { fontSize: 12, color: "#52525b", marginTop: 2 },
+  badge: { fontSize: 10, padding: "4px 10px", borderRadius: 8, background: "rgba(255,255,255,0.04)", color: "#71717a", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", border: "1px solid rgba(255,255,255,0.04)" },
+  th: { padding: "12px 24px", fontSize: 11, fontWeight: 600, color: "#71717a", textTransform: "uppercase", letterSpacing: "0.1em", borderTop: "1px solid rgba(255,255,255,0.04)" },
+  td: { padding: "16px 24px", borderTop: "1px solid rgba(255,255,255,0.03)" },
+  mono: { fontFamily: "'DM Mono', monospace", fontSize: 12 },
+  footer: { borderTop: "1px solid rgba(255,255,255,0.04)", marginTop: 32, padding: "32px 0" },
+  footerInner: { maxWidth: "1100px", margin: "0 auto", padding: "0 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 },
+  footerText: { fontSize: 11, color: "#3f3f46" },
 };
 
 function App() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState("people");
+  const [tab, setTab] = useState("people");
 
-  const fetchData = () => {
-    setLoading(true);
-    setError(null);
+  const load = () => {
+    setLoading(true); setError(null);
     api.getDrift()
-      .then((result) => { setData(result); setLoading(false); })
+      .then((r) => { setData(r); setLoading(false); })
       .catch((e) => { setError(e.message); setLoading(false); });
   };
+  useEffect(load, []);
 
-  useEffect(() => { fetchData(); }, []);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <Loader2 className="w-10 h-10 text-purple-400 animate-spin mx-auto" />
-          <p className="text-zinc-400 text-sm tracking-wide uppercase">Loading drift analysis…</p>
+  if (loading) return (
+    <div style={{ ...S.page, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+      <div style={{ textAlign: "center" }}>
+        <div style={{ ...S.logo, width: 56, height: 56, borderRadius: 16, margin: "0 auto 20px" }}>
+          <BarChart3 size={28} color="#fff" />
         </div>
+        <p style={{ color: "#fff", fontSize: 18, fontWeight: 700 }}>PayDrift</p>
+        <p style={{ color: "#71717a", fontSize: 14, marginTop: 4 }}>Analyzing spend drift…</p>
+        <Loader2 size={20} color="#a78bfa" style={{ margin: "20px auto 0", animation: "spin 1s linear infinite" }} />
       </div>
-    );
-  }
+    </div>
+  );
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <div className="text-center space-y-4 max-w-md">
-          <AlertTriangle className="w-10 h-10 text-red-400 mx-auto" />
-          <p className="text-zinc-300">Failed to load data</p>
-          <p className="text-zinc-500 text-sm">{error}</p>
-          <button onClick={fetchData} className="inline-flex items-center gap-2 px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-lg text-sm transition-colors">
-            <RefreshCw className="w-4 h-4" /> Retry
-          </button>
-        </div>
+  if (error) return (
+    <div style={{ ...S.page, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ textAlign: "center", maxWidth: 320 }}>
+        <AlertTriangle size={40} color="#f87171" style={{ margin: "0 auto 16px" }} />
+        <p style={{ color: "#fff", fontSize: 18, fontWeight: 600 }}>Connection Failed</p>
+        <p style={{ color: "#71717a", fontSize: 14, marginTop: 8 }}>Backend not running on port 8000.</p>
+        <code style={{ display: "block", fontSize: 12, color: "#52525b", background: "#18181b", borderRadius: 8, padding: "8px 12px", marginTop: 12 }}>{error}</code>
+        <button onClick={load} style={{ marginTop: 16, padding: "8px 20px", background: "#27272a", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8 }}>
+          <RefreshCw size={14} /> Retry
+        </button>
       </div>
-    );
-  }
+    </div>
+  );
 
-  const { total_monthly_drift, annualized_drift, categories, monthly_trends } = data;
-  const activeCat = categories.find((c) => c.category === activeTab) || categories[0];
-  const meta = CATEGORY_META[activeCat.category];
+  const { total_monthly_drift: tmd, annualized_drift: ad, categories, monthly_trends: trends } = data;
+  const active = categories.find((c) => c.category === tab) || categories[0];
+  const m = CAT[active.category];
+  const top = active.items[0];
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100" style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif" }}>
-      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <div style={S.page}>
+      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+      <style>{`@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}} @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}} table{border-collapse:collapse} button{cursor:pointer;border:none;background:none;font-family:inherit}`}</style>
 
       {/* HEADER */}
-      <header className="border-b border-zinc-800/60 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg, #a78bfa, #ec4899)" }}>
-            <TrendingUp className="w-4 h-4 text-white" />
+      <header style={S.header}>
+        <div style={S.headerInner}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={S.logo}><TrendingUp size={16} color="#fff" /></div>
+            <span style={{ fontWeight: 800, fontSize: 17, color: "#fff", letterSpacing: "-0.02em" }}>PayDrift</span>
+            <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 4, background: "rgba(167,139,250,0.15)", color: "#a78bfa", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.15em" }}>Beta</span>
           </div>
-          <span className="font-semibold text-lg tracking-tight">DriftWatch</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <span style={{ fontSize: 11, color: "#52525b", textTransform: "uppercase", letterSpacing: "0.08em" }}>Jan–Jun 2025</span>
+            <div style={{ width: 1, height: 16, background: "rgba(255,255,255,0.06)" }} />
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#34d399", animation: "pulse 2s ease infinite" }} />
+              <span style={{ fontSize: 11, color: "#71717a" }}>Live</span>
+            </div>
+          </div>
         </div>
-        <span className="text-xs text-zinc-500 tracking-wide uppercase">Jan – Jun 2025</span>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+      <div style={S.content}>
 
-        {/* HERO BANNER */}
-        <div className="relative overflow-hidden rounded-2xl border border-red-500/30 p-8" style={{ background: "linear-gradient(135deg, rgba(220,38,38,0.12) 0%, rgba(153,27,27,0.08) 100%)" }}>
-          <div className="absolute top-0 right-0 w-80 h-80 rounded-full opacity-10 blur-3xl" style={{ background: "radial-gradient(circle, #ef4444, transparent)" }} />
-          <div className="relative">
-            <div className="flex items-center gap-2 mb-3">
-              <AlertTriangle className="w-4 h-4 text-red-400" />
-              <span className="text-xs font-medium text-red-400 uppercase tracking-widest">Unplanned Spend Detected</span>
+        {/* HERO */}
+        <div style={{ ...S.hero, ...S.section }}>
+          <div style={S.heroGlow} />
+          <div style={{ position: "relative" }}>
+            <div style={S.pill}>
+              <Zap size={14} color="#f87171" />
+              <span style={S.pillText}>Unplanned Spend Detected</span>
             </div>
-            <div className="flex items-baseline gap-4 flex-wrap">
-              <span className="text-6xl font-bold tracking-tight text-white" style={{ fontFamily: "'DM Mono', monospace" }}>{fmt(total_monthly_drift)}</span>
-              <span className="text-xl text-red-300/80">/month</span>
+            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center" }}>
+              <span style={S.bigNum}>{fmt(tmd)}</span>
+              <span style={S.bigSuffix}>/mo</span>
             </div>
-            <div className="mt-2 flex items-center gap-2 text-zinc-400">
-              <span className="text-lg">→</span>
-              <span className="text-lg font-medium text-red-300" style={{ fontFamily: "'DM Mono', monospace" }}>{fmt(annualized_drift)}</span>
-              <span className="text-sm">/year in drift</span>
-            </div>
-          </div>
-        </div>
-
-        {/* METRIC CARDS */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {categories.map((cat) => {
-            const m = CATEGORY_META[cat.category];
-            const isUp = cat.total_drift > 0;
-            const Arrow = isUp ? TrendingUp : TrendingDown;
-            return (
-              <button key={cat.category} onClick={() => setActiveTab(cat.category)}
-                className={`text-left rounded-xl border p-5 transition-all duration-200 ${activeTab === cat.category ? "border-zinc-600 bg-zinc-800/80 shadow-lg shadow-zinc-900/50" : "border-zinc-800/60 bg-zinc-900/50 hover:bg-zinc-800/40 hover:border-zinc-700"}`}>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: m.color + "18" }}>
-                    <m.icon className="w-5 h-5" style={{ color: m.color }} />
-                  </div>
-                  <Arrow className={`w-5 h-5 ${isUp ? "text-red-400" : "text-emerald-400"}`} />
-                </div>
-                <p className="text-sm text-zinc-400 mb-1">{m.label}</p>
-                <p className="text-2xl font-bold tracking-tight" style={{ fontFamily: "'DM Mono', monospace" }}>
-                  <span className={isUp ? "text-red-400" : "text-emerald-400"}>{isUp ? "+" : ""}{fmt(cat.total_drift)}</span>
-                </p>
-                <p className={`text-xs mt-1 ${isUp ? "text-red-400/70" : "text-emerald-400/70"}`}>{fmtPct(cat.drift_pct)} overall</p>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* TREND CHART */}
-        <div className="rounded-xl border border-zinc-800/60 bg-zinc-900/50 p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-sm font-medium text-zinc-400 uppercase tracking-wider">Monthly Spend — {meta.label}</h2>
-            <div className="flex gap-1 bg-zinc-800/80 rounded-lg p-0.5">
+            <p style={S.annualized}>
+              That's <span style={S.annualNum}>{fmt(ad)}</span> <span style={{ color: "#a1a1aa" }}>/year</span> in unbudgeted drift
+            </p>
+            <div style={S.miniPills}>
               {categories.map((c) => {
-                const cm = CATEGORY_META[c.category];
+                const cm = CAT[c.category]; const up = c.total_drift > 0;
+                const Icon = cm.icon;
                 return (
-                  <button key={c.category} onClick={() => setActiveTab(c.category)}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${activeTab === c.category ? "bg-zinc-700 text-white" : "text-zinc-500 hover:text-zinc-300"}`}>
-                    {cm.label}
-                  </button>
+                  <div key={c.category} style={S.miniPill}>
+                    <Icon size={14} color={cm.color} />
+                    <span style={S.miniPillText}>{cm.label}</span>
+                    <span style={{ ...S.miniPillVal, color: up ? "#f87171" : "#34d399" }}>
+                      {up ? "↑" : "↓"}{fmt(c.total_drift)}
+                    </span>
+                  </div>
                 );
               })}
             </div>
           </div>
-          <ResponsiveContainer width="100%" height={280}>
-            <AreaChart data={monthly_trends}>
-              <defs>
-                <linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={meta.color} stopOpacity={0.25} />
-                  <stop offset="100%" stopColor={meta.color} stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid stroke="#27272a" strokeDasharray="3 3" />
-              <XAxis dataKey="month" tick={{ fill: "#71717a", fontSize: 12 }} axisLine={{ stroke: "#3f3f46" }} tickLine={false} />
-              <YAxis tick={{ fill: "#71717a", fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(v) => "$" + (v >= 1000 ? Math.round(v / 1000) + "k" : v)} />
-              <Tooltip
-                contentStyle={{ background: "#18181b", border: "1px solid #3f3f46", borderRadius: "8px", fontSize: "13px", fontFamily: "'DM Mono', monospace" }}
-                labelStyle={{ color: "#a1a1aa" }}
-                itemStyle={{ color: meta.color }}
-                formatter={(v) => ["$" + Math.round(v).toLocaleString(), "Spend"]}
-              />
-              <Area type="monotone" dataKey={meta.trendKey} stroke={meta.color} strokeWidth={2.5} fill="url(#areaFill)" dot={false}
-                activeDot={{ r: 5, fill: meta.color, stroke: "#18181b", strokeWidth: 2 }} />
-            </AreaChart>
-          </ResponsiveContainer>
         </div>
 
-        {/* DRIFT BREAKDOWN TABLE */}
-        <div className="rounded-xl border border-zinc-800/60 bg-zinc-900/50 overflow-hidden">
-          <div className="px-6 py-4 border-b border-zinc-800/60 flex items-center justify-between">
-            <h2 className="text-sm font-medium text-zinc-400 uppercase tracking-wider">Drift Breakdown — {meta.label}</h2>
-            <span className="text-xs text-zinc-600">Sorted by largest drift</span>
+        {/* CARDS */}
+        <div style={{ ...S.grid, ...S.section }}>
+          {categories.map((c) => {
+            const cm = CAT[c.category]; const up = c.total_drift > 0; const sel = tab === c.category;
+            const Icon = cm.icon; const Arr = up ? ArrowUpRight : ArrowDownRight;
+            return (
+              <div key={c.category} onClick={() => setTab(c.category)} style={S.card(sel, cm.color)}>
+                <div style={S.cardIcon(cm.color, sel)}><Icon size={22} color={cm.color} /></div>
+                <p style={S.cardLabel}>{cm.label}</p>
+                <p style={S.cardDesc}>{cm.desc}</p>
+                <p style={S.cardNum}>
+                  <span style={{ color: up ? "#f87171" : "#34d399" }}>{up ? "+" : ""}{fmt(c.total_drift)}</span>
+                </p>
+                <div style={{ ...S.cardPct, color: up ? "rgba(248,113,113,0.5)" : "rgba(52,211,153,0.5)" }}>
+                  <Arr size={14} /> <span style={{ fontWeight: 600 }}>{fmtPct(c.drift_pct)} drift</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* CHART */}
+        <div style={{ ...S.chartBox, ...S.section }}>
+          <div style={S.chartHeader}>
+            <div>
+              <p style={S.chartTitle}>Monthly Spend Trend</p>
+              <p style={S.chartSub}>{m.label} · 6-month analysis window</p>
+            </div>
+            <div style={S.tabBar}>
+              {categories.map((c) => {
+                const cm = CAT[c.category];
+                return <button key={c.category} onClick={() => setTab(c.category)} style={S.tab(tab === c.category, cm.color)}>{cm.label}</button>;
+              })}
+            </div>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-xs text-zinc-500 uppercase tracking-wider">
-                  <th className="px-6 py-3 font-medium">Item</th>
-                  <th className="px-6 py-3 font-medium text-right">Avg Before</th>
-                  <th className="px-6 py-3 font-medium text-right">Avg After</th>
-                  <th className="px-6 py-3 font-medium text-right">Drift ($)</th>
-                  <th className="px-6 py-3 font-medium text-right">Drift (%)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {activeCat.items.map((row, i) => {
-                  const severity = Math.abs(row.drift_pct) > 20 ? "bg-red-950/30" : Math.abs(row.drift_pct) > 10 ? "bg-red-950/15" : "";
-                  const isUp = row.drift > 0;
-                  return (
-                    <tr key={i} className={`border-t border-zinc-800/40 transition-colors hover:bg-zinc-800/30 ${severity}`}>
-                      <td className="px-6 py-3 text-zinc-300 font-medium">{row.item}</td>
-                      <td className="px-6 py-3 text-right text-zinc-400" style={{ fontFamily: "'DM Mono', monospace" }}>{fmt(row.avg_before)}</td>
-                      <td className="px-6 py-3 text-right text-zinc-300" style={{ fontFamily: "'DM Mono', monospace" }}>{fmt(row.avg_after)}</td>
-                      <td className={`px-6 py-3 text-right font-semibold ${isUp ? "text-red-400" : "text-emerald-400"}`} style={{ fontFamily: "'DM Mono', monospace" }}>
-                        {isUp ? "+" : ""}{fmt(row.drift)}
-                      </td>
-                      <td className={`px-6 py-3 text-right ${isUp ? "text-red-400/80" : "text-emerald-400/80"}`} style={{ fontFamily: "'DM Mono', monospace" }}>
-                        {fmtPct(row.drift_pct)}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          <div style={{ padding: "8px 12px 20px" }}>
+            <ResponsiveContainer width="100%" height={320}>
+              <AreaChart data={trends} margin={{ top: 15, right: 15, left: 5, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={m.color} stopOpacity={0.25} />
+                    <stop offset="100%" stopColor={m.color} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid stroke="rgba(255,255,255,0.04)" strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="month" tick={{ fill: "#52525b", fontSize: 11 }} axisLine={false} tickLine={false}
+                  tickFormatter={(v) => MO[parseInt(v.split("-")[1]) - 1] || v} />
+                <YAxis tick={{ fill: "#52525b", fontSize: 11, fontFamily: "'DM Mono'" }} axisLine={false} tickLine={false} width={60}
+                  tickFormatter={(v) => "$" + (v >= 1e6 ? (v/1e6).toFixed(1)+"M" : v >= 1000 ? Math.round(v/1000)+"k" : v)} />
+                <Tooltip
+                  contentStyle={{ background: "#141416", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, fontSize: 12, fontFamily: "'DM Mono'", boxShadow: "0 20px 60px rgba(0,0,0,0.6)", padding: "12px 16px" }}
+                  labelStyle={{ color: "#71717a", marginBottom: 6, fontSize: 11 }}
+                  formatter={(v) => ["$" + Math.round(v).toLocaleString(), m.label]}
+                  labelFormatter={(v) => { const p = v.split("-"); return FULL_MO[parseInt(p[1])-1] + " " + p[0]; }}
+                  cursor={{ stroke: m.color, strokeWidth: 1, strokeOpacity: 0.2 }}
+                />
+                <Area type="monotone" dataKey={m.key} stroke={m.color} strokeWidth={2.5} fill="url(#grad)" dot={false}
+                  activeDot={{ r: 6, fill: m.color, stroke: "#09090b", strokeWidth: 3 }} />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
-      </main>
+        {/* TOP DRIFTER */}
+        {top && top.drift > 0 && (
+          <div style={{ ...S.drifterBox, ...S.section }}>
+            <div style={S.drifterIcon}><DollarSign size={20} color="#f87171" /></div>
+            <div>
+              <p style={S.drifterText}><span style={S.drifterName}>{top.item}</span> is your biggest drifter in {m.label.toLowerCase()}</p>
+              <p style={S.drifterSub}>Increased by <span style={S.drifterNum}>{fmt(top.drift)}/mo</span> ({fmtPct(top.drift_pct)}) vs. prior 3-month avg</p>
+            </div>
+          </div>
+        )}
 
-      <footer className="border-t border-zinc-800/40 mt-12 px-6 py-6 text-center">
-        <p className="text-xs text-zinc-600">DriftWatch · Spend Drift Analysis · Data period Jan–Jun 2025</p>
+        {/* TABLE */}
+        <div style={S.tableBox}>
+          <div style={S.tableHeader}>
+            <div>
+              <p style={S.tableTitle}>Drift Breakdown</p>
+              <p style={S.tableSub}>{m.label} · Sorted by absolute impact</p>
+            </div>
+            <span style={S.badge}>{active.items.length} items</span>
+          </div>
+          <table style={{ width: "100%" }}>
+            <thead>
+              <tr>
+                <th style={{ ...S.th, textAlign: "left" }}>Item</th>
+                <th style={{ ...S.th, textAlign: "right" }}>Before</th>
+                <th style={{ ...S.th, textAlign: "right" }}>After</th>
+                <th style={{ ...S.th, textAlign: "right" }}>Drift</th>
+                <th style={{ ...S.th, textAlign: "right" }}>Change</th>
+                <th style={{ ...S.th, textAlign: "center", width: 140 }}>Impact</th>
+              </tr>
+            </thead>
+            <tbody>
+              {active.items.map((r, i) => {
+                const up = r.drift > 0;
+                const ap = Math.abs(r.drift_pct || 0);
+                const bg = ap > 50 ? "rgba(239,68,68,0.05)" : ap > 20 ? "rgba(239,68,68,0.025)" : "transparent";
+                const mx = Math.max(...active.items.map((x) => Math.abs(x.drift)));
+                const bw = mx > 0 ? (Math.abs(r.drift) / mx) * 100 : 0;
+                return (
+                  <tr key={i} style={{ background: bg }}>
+                    <td style={{ ...S.td, textAlign: "left" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                        <div style={{ width: 8, height: 8, borderRadius: "50%", background: up ? "#ef4444" : "#10b981", flexShrink: 0 }} />
+                        <span style={{ color: "#e4e4e7", fontWeight: 600, fontSize: 13 }}>{r.item}</span>
+                      </div>
+                    </td>
+                    <td style={{ ...S.td, ...S.mono, textAlign: "right", color: "#71717a" }}>{fmt(r.avg_before)}</td>
+                    <td style={{ ...S.td, ...S.mono, textAlign: "right", color: "#d4d4d8" }}>{fmt(r.avg_after)}</td>
+                    <td style={{ ...S.td, ...S.mono, textAlign: "right", fontWeight: 800, color: up ? "#f87171" : "#34d399" }}>
+                      {up ? "+" : "-"}{fmt(r.drift)}
+                    </td>
+                    <td style={{ ...S.td, ...S.mono, textAlign: "right", fontSize: 11, color: up ? "rgba(248,113,113,0.6)" : "rgba(52,211,153,0.6)" }}>
+                      {fmtPct(r.drift_pct)}
+                    </td>
+                    <td style={S.td}>
+                      <div style={{ width: "100%", height: 8, background: "rgba(255,255,255,0.04)", borderRadius: 4, overflow: "hidden" }}>
+                        <div style={{ height: "100%", borderRadius: 4, width: `${bw}%`, transition: "width 0.7s ease",
+                          background: up ? `linear-gradient(90deg, ${m.color}50, #ef444480)` : `linear-gradient(90deg, ${m.color}50, #10b98180)` }} />
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* FOOTER */}
+      <footer style={S.footer}>
+        <div style={S.footerInner}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ ...S.logo, width: 20, height: 20, borderRadius: 4 }}><TrendingUp size={10} color="#fff" /></div>
+            <span style={S.footerText}>PayDrift · Spend Drift Intelligence</span>
+          </div>
+          <span style={S.footerText}>Data period Jan–Jun 2025</span>
+        </div>
       </footer>
     </div>
   );
