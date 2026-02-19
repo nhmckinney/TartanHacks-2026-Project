@@ -315,7 +315,7 @@ function Landing({ onStart, user, token, onShowAuth, onLogout }) {
           {!allUploaded && (
             <p style={{ fontSize: 12, color: "#3f3f46", marginTop: 16 }}>
               Upload all 3 files to continue, or{" "}
-              <span onClick={() => { setUseDemo(true); onStart(); }} style={{ color: "#a78bfa", cursor: "pointer", textDecoration: "underline" }}>try with demo data</span>
+              <span onClick={() => { if (!token) { onShowAuth("login"); return; } setUseDemo(true); onStart(); }} style={{ color: "#a78bfa", cursor: "pointer", textDecoration: "underline" }}>try with demo data</span>
             </p>
           )}
         </div>
@@ -434,10 +434,13 @@ function App() {
     <div style={{ ...S.page, display: "flex", alignItems: "center", justifyContent: "center" }}>
       <div style={{ textAlign: "center", maxWidth: 320 }}>
         <AlertTriangle size={40} color="#f87171" style={{ margin: "0 auto 16px" }} />
-        <p style={{ color: "#fff", fontSize: 18, fontWeight: 600 }}>Analysis Failed</p>
-        <p style={{ color: "#71717a", fontSize: 13, marginTop: 8 }}>Backend not reachable.</p>
-        <button onClick={loadDrift} style={{ marginTop: 16, padding: "8px 20px", background: "#27272a", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, cursor: "pointer" }}><RefreshCw size={14} /> Retry</button>
-        <p style={{ marginTop: 12 }}><span onClick={() => setPage("landing")} style={{ color: "#a78bfa", fontSize: 12, cursor: "pointer" }}>← Back to upload</span></p>
+        <p style={{ color: "#fff", fontSize: 18, fontWeight: 600 }}>{error === "401" ? "Session Expired" : "Analysis Failed"}</p>
+        <p style={{ color: "#71717a", fontSize: 13, marginTop: 8 }}>{error === "401" ? "Please log in to continue." : "Backend not reachable."}</p>
+        {error === "401"
+          ? <button onClick={() => { setPage("landing"); setError(null); setAuthModal("login"); }} style={{ marginTop: 16, padding: "8px 20px", background: "linear-gradient(135deg, #a78bfa, #ec4899)", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6 }}><LogIn size={14} /> Log In</button>
+          : <button onClick={loadDrift} style={{ marginTop: 16, padding: "8px 20px", background: "#27272a", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, cursor: "pointer" }}><RefreshCw size={14} /> Retry</button>
+        }
+        <p style={{ marginTop: 12 }}><span onClick={() => { setPage("landing"); setError(null); }} style={{ color: "#a78bfa", fontSize: 12, cursor: "pointer" }}>← Back to upload</span></p>
       </div>
     </div>
   );
